@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../widgets/primary_button.dart';
+import '../../theme/app_colors.dart';
+import '../../widgets/primary_button.dart';
+import '../map/map_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -24,7 +25,10 @@ class WelcomeScreen extends StatelessWidget {
                 label: 'Explore Map',
                 icon: Icons.map_outlined,
                 onPressed: () {
-                  // TODO: navigate to map screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MapScreen()),
+                  );
                 },
               ),
               const SizedBox(height: 18),
@@ -39,8 +43,6 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
-
-// ── Bike icon + title + tagline ──────────────────────────────────────────────
 
 class _BikeHeader extends StatelessWidget {
   @override
@@ -72,8 +74,6 @@ class _BikeHeader extends StatelessWidget {
   }
 }
 
-// ── Map image card ───────────────────────────────────────────────────────────
-
 class _MapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -88,8 +88,6 @@ class _MapCard extends StatelessWidget {
     );
   }
 }
-
-// ── Log in link ──────────────────────────────────────────────────────────────
 
 class _LoginLink extends StatelessWidget {
   @override
@@ -111,8 +109,6 @@ class _LoginLink extends StatelessWidget {
     );
   }
 }
-
-// ── Footer ───────────────────────────────────────────────────────────────────
 
 class _Footer extends StatelessWidget {
   @override
