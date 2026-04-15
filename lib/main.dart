@@ -28,7 +28,7 @@ class VeloToulouseApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'VeloToulouse',
+        title: 'KONG JOUL ',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
