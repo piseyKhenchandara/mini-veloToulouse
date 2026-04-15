@@ -3,143 +3,88 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 
 import '../../../config/map_config.dart';
 import '../../../data/repositories/station_repository.dart';
-import '../../../model/station.dart';
 import '../../theme/app_colors.dart';
+import 'map_view_model.dart';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => MapViewModel(StationRepository()),
+      child: const _MapView(),
+    );
+  }
 }
 
-class _MapScreenState extends State<MapScreen> {
-  final MapController _mapController = MapController();
-  final StationRepository _repository = StationRepository();
-
-  List<Station> _stations = [];
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStations();
-  }
-
-  Future<void> _loadStations() async {
-    try {
-      final stations = await _repository.fetchAll();
-      setState(() {
-        _stations = stations;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
+class _MapView extends StatelessWidget {
+  const _MapView();
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    final vm = context.watch<MapViewModel>();
+
+    if (vm.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (_error != null) {
-      return Scaffold(
-        body: Center(child: Text('Error: $_error')),
-      );
+    if (vm.error != null) {
+      return Scaffold(body: Center(child: Text('Error: ${vm.error}')));
     }
+
     return Scaffold(
       body: Stack(
         children: [
-          _buildMap(),
-          _buildSearchBar(),
-          /* _buildReleaseButton(), */
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: LatLng(MapConfig.defaultLat, MapConfig.defaultLng),
+              initialZoom: MapConfig.defaultZoom,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.mini_velo',
+              ),
+              MarkerLayer(
+                markers: vm.stations
+                    .map((s) => Marker(
+                          point: LatLng(s.lat, s.lng),
+                          width: 72,
+                          height: 52,
+                          child: _StationBubble(bikeCount: s.availableBikes),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search Station',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.zero,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMap() {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: LatLng(MapConfig.defaultLat, MapConfig.defaultLng),
-        initialZoom: MapConfig.defaultZoom,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.mini_velo',
-        ),
-        MarkerLayer(
-          markers: _stations
-              .map((s) => Marker(
-                    point: LatLng(s.lat, s.lng),
-                    width: 72,
-                    height: 52,
-                    child: _StationBubble(bikeCount: s.availableBikes),
-                  ))
-              .toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search Station',
-            hintStyle: const TextStyle(color: Colors.grey),
-            prefixIcon: const Icon(Icons.search, color: Colors.grey),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: EdgeInsets.zero,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReleaseButton() {
-    return Positioned(
-      bottom: 32,
-      left: 24,
-      right: 24,
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-        child: const Text(
-          'Release a bike',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
       ),
     );
   }

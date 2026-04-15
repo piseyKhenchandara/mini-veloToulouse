@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data/repositories/station_repository.dart';
-import '../../model/station.dart';
+import '../../../data/repositories/station_repository.dart';
+import '../../../model/station.dart';
 
 class MapViewModel extends ChangeNotifier {
   final StationRepository _repository;
