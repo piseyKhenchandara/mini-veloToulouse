@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>KONG JOUL needs your location to show the distance to nearby bike stations.</string>
 </dict>
 </plist>
