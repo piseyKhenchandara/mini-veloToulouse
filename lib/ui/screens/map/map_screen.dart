@@ -29,8 +29,30 @@ class MapScreen extends StatelessWidget {
   }
 }
 
-class _MapView extends StatelessWidget {
+class _MapView extends StatefulWidget {
   const _MapView();
+
+  @override
+  State<_MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<_MapView> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  void _onSuggestionTap(MapViewModel vm, station) {
+    vm.selectStation(station);
+    vm.clearSearch();
+    _searchController.clear();
+    _searchFocus.unfocus();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +72,12 @@ class _MapView extends StatelessWidget {
             options: MapOptions(
               initialCenter: LatLng(MapConfig.defaultLat, MapConfig.defaultLng),
               initialZoom: MapConfig.defaultZoom,
-              onTap: (tapPosition, point) =>
-                  context.read<MapViewModel>().deselectStation(),
+              onTap: (tapPosition, point) {
+                context.read<MapViewModel>().deselectStation();
+                context.read<MapViewModel>().clearSearch();
+                _searchController.clear();
+                _searchFocus.unfocus();
+              },
             ),
             children: [
               TileLayer(
@@ -82,10 +108,16 @@ class _MapView extends StatelessWidget {
                         width: 72,
                         height: 52,
                         child: GestureDetector(
-                          onTap: () =>
-                              context.read<MapViewModel>().selectStation(s),
+                          onTap: () {
+                            context.read<MapViewModel>().selectStation(s);
+                            context.read<MapViewModel>().clearSearch();
+                            _searchController.clear();
+                            _searchFocus.unfocus();
+                          },
                           child: _StationBubble(
-                            count: vm.isRiding ? s.availableDocks : s.availableBikes,
+                            count: vm.isRiding
+                                ? s.availableDocks
+                                : s.availableBikes,
                           ),
                         ),
                       ),
@@ -114,27 +146,39 @@ class _MapView extends StatelessWidget {
                 ),
             ],
           ),
-          // Top overlay — ride bar + search bar
+          // Top overlay — ride bar + search bar + suggestions
           SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (vm.isRiding)
-                  RideBar(
-                    ride: vm.activeRide!,
-                    duration: vm.rideDuration,
-                  ),
+                  RideBar(ride: vm.activeRide!, duration: vm.rideDuration),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocus,
+                    onChanged: (q) =>
+                        context.read<MapViewModel>().onSearchChanged(q),
                     decoration: InputDecoration(
                       hintText: vm.isRiding
                           ? 'Search Return Station'
                           : 'Search Station',
                       hintStyle: const TextStyle(color: Colors.grey),
-                      prefixIcon:
-                          const Icon(Icons.search, color: Colors.grey),
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.grey),
+                              onPressed: () {
+                                context.read<MapViewModel>().clearSearch();
+                                _searchController.clear();
+                                _searchFocus.unfocus();
+                              },
+                            )
+                          : null,
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.zero,
@@ -149,6 +193,87 @@ class _MapView extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Suggestions dropdown
+                if (vm.searchSuggestions.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: vm.searchSuggestions.map((s) {
+                          final dockCount = vm.isRiding
+                              ? s.availableDocks
+                              : s.availableBikes;
+                          final label = vm.isRiding ? 'free slots' : 'bikes';
+                          final dotColor = dockCount <= 3
+                              ? Colors.red
+                              : dockCount < 6
+                              ? Colors.orange
+                              : AppColors.primary;
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => _onSuggestionTap(
+                              context.read<MapViewModel>(),
+                              s,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      s.name,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: dotColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '$dockCount $label',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: dotColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -209,9 +334,10 @@ class _StationBubble extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             boxShadow: const [
               BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(0, 2)),
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Text(
@@ -247,5 +373,6 @@ class _TrianglePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TrianglePainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(_TrianglePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

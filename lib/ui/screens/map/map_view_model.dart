@@ -25,6 +25,7 @@ class MapViewModel extends ChangeNotifier {
   ActiveRide? _activeRide;
   Duration _rideDuration = Duration.zero;
   Timer? _rideTimer;
+  String _searchQuery = '';
 
   List<Station> get stations => _stations;
   bool get isLoading => _isLoading;
@@ -36,10 +37,31 @@ class MapViewModel extends ChangeNotifier {
   bool get isRiding => _activeRide != null;
   Duration get rideDuration => _rideDuration;
 
+  List<Station> get searchSuggestions {
+    if (_searchQuery.isEmpty) return [];
+    final q = _searchQuery.toLowerCase();
+    return _stations
+        .where((s) => s.name.toLowerCase().contains(q))
+        .take(5)
+        .toList();
+  }
+
+  void onSearchChanged(String query) {
+    _searchQuery = query;
+    if (query.isNotEmpty) _showDetailPanel = false;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    notifyListeners();
+  }
+
   void onRideStarted(ActiveRide ride) {
     _activeRide = ride;
     _showDetailPanel = false;
     _selectedStation = null;
+    _searchQuery = '';
     _rideDuration = Duration.zero;
     _rideTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _rideDuration += const Duration(seconds: 1);
@@ -55,6 +77,7 @@ class MapViewModel extends ChangeNotifier {
     _rideDuration = Duration.zero;
     _selectedStation = null;
     _showDetailPanel = false;
+    _searchQuery = '';
     notifyListeners();
     fetchStations();
   }
