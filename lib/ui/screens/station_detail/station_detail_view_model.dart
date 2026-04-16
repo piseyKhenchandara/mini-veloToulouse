@@ -40,13 +40,16 @@ class StationDetailViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.wait([_fetchBikes(), _fetchDistance()]);
+      await _fetchBikes();
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+
+    // Load distance in background — bikes are already shown
+    _fetchDistance().then((_) => notifyListeners());
   }
 
   Future<void> _fetchBikes() async {
