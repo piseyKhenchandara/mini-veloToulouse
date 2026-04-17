@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../data/repositories/auth_repository.dart';
-import '../register/register_screen.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/primary_button.dart';
@@ -142,16 +140,7 @@ class _LoginView extends StatelessWidget {
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               TextButton(
-                                onPressed: vm.isLoading
-                                    ? null
-                                    : () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const RegisterScreen(),
-                                          ),
-                                        );
-                                      },
+                                onPressed: null,
                                 child: const Text('Register'),
                               ),
                             ],
