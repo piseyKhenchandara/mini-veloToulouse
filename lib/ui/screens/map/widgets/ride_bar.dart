@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../model/active_ride.dart';
+import '../../../../model/active_ride.dart';
 
 class RideBar extends StatelessWidget {
   final ActiveRide ride;

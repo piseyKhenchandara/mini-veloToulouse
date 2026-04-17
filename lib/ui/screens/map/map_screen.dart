@@ -1,9 +1,6 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:mini_velo/ui/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 import '../../../config/map_config.dart';
@@ -16,8 +13,10 @@ import '../subscription/plan_view_model.dart';
 import 'map_view_model.dart';
 import 'return_station_panel.dart';
 import 'return_station_panel_view_model.dart';
-import 'ride_bar.dart';
-import 'station_detail_panel.dart';
+import 'widgets/ride_bar.dart';
+import '../station_detail/station_detail_panel.dart';
+import 'widgets/search_section.dart';
+import 'widgets/station_bubble.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
@@ -46,7 +45,7 @@ class _MapView extends StatefulWidget {
 }
 class _MapViewState extends State<_MapView> {
   final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocus = FocusNode();
+  final FocusNode _searchFocus = FocusNode(); // hiide the keyboard when a suggestion is tapped 
 
   @override
   void initState() {
@@ -109,10 +108,7 @@ class _MapViewState extends State<_MapView> {
                     Polyline(
                       points: [
                         vm.userLocation!,
-                        LatLng(
-                          vm.selectedStation!.lat,
-                          vm.selectedStation!.lng,
-                        ),
+                        LatLng(vm.selectedStation!.lat, vm.selectedStation!.lng),
                       ],
                       color: Colors.blue,
                       strokeWidth: 4,
@@ -120,28 +116,22 @@ class _MapViewState extends State<_MapView> {
                   ],
                 ),
               MarkerLayer(
-                markers: vm.stations
-                    .map(
-                      (s) => Marker(
-                        point: LatLng(s.lat, s.lng),
-                        width: 72,
-                        height: 52,
-                        child: GestureDetector(
-                          onTap: () {
-                            context.read<MapViewModel>().selectStation(s);
-                            context.read<MapViewModel>().clearSearch();
-                            _searchController.clear();
-                            _searchFocus.unfocus();
-                          },
-                          child: _StationBubble(
-                            count: vm.isRiding
-                                ? s.availableDocks
-                                : s.availableBikes,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
+                markers: vm.stations.map((s) => Marker(
+                  point: LatLng(s.lat, s.lng),
+                  width: 72,
+                  height: 52,
+                  child: GestureDetector(
+                    onTap: () {
+                      context.read<MapViewModel>().selectStation(s);
+                      context.read<MapViewModel>().clearSearch();
+                      _searchController.clear();
+                      _searchFocus.unfocus();
+                    },
+                    child: StationBubble(
+                      count: vm.isRiding ? s.availableDocks : s.availableBikes,
+                    ),
+                  ),
+                )).toList(),
               ),
               if (vm.userLocation != null)
                 MarkerLayer(
@@ -173,127 +163,11 @@ class _MapViewState extends State<_MapView> {
                 SizedBox(height: 50,),
                 if (vm.isRiding)
                   RideBar(ride: vm.activeRide!, duration: vm.rideDuration),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocus,
-                    onChanged: (q) =>
-                        context.read<MapViewModel>().onSearchChanged(q),
-                    decoration: InputDecoration(
-                      hintText: vm.isRiding
-                          ? 'Search Return Station'
-                          : 'Search Station',
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.grey),
-                              onPressed: () {
-                                context.read<MapViewModel>().clearSearch();
-                                _searchController.clear();
-                                _searchFocus.unfocus();
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: EdgeInsets.zero,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
+                SearchSection(
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  onSuggestionTap: (s) => _onSuggestionTap(context.read<MapViewModel>(), s),
                 ),
-                // Suggestions dropdown
-                if (vm.searchSuggestions.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: vm.searchSuggestions.map((s) {
-                          final dockCount = vm.isRiding
-                              ? s.availableDocks
-                              : s.availableBikes;
-                          final label = vm.isRiding ? 'free slots' : 'bikes';
-                          final dotColor = dockCount <= 3
-                              ? Colors.red
-                              : dockCount < 6
-                              ? Colors.orange
-                              : AppColors.primary;
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => _onSuggestionTap(
-                              context.read<MapViewModel>(),
-                              s,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on_outlined,
-                                    color: Colors.grey,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      s.name,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: dotColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '$dockCount $label',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: dotColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -330,70 +204,4 @@ class _MapViewState extends State<_MapView> {
       ),
     );
   }
-}
-
-class _StationBubble extends StatelessWidget {
-  final int count;
-
-  const _StationBubble({required this.count});
-
-  Color get _bubbleColor {
-    if (count <= 3) return Colors.red;
-    if (count < 6) return Colors.orange;
-    return AppColors.primary;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _bubbleColor,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Text(
-            '$count',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        CustomPaint(
-          painter: _TrianglePainter(color: _bubbleColor),
-          size: const Size(12, 8),
-        ),
-      ],
-    );
-  }
-}
-
-class _TrianglePainter extends CustomPainter {
-  final Color color;
-  const _TrianglePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = ui.Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0)
-      ..close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_TrianglePainter oldDelegate) =>
-      oldDelegate.color != color;
 }

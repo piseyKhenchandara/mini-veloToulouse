@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import '../../../model/bike.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/payment_confirm_sheet.dart';
-import '../station_detail/station_detail_view_model.dart';
+import 'station_detail_view_model.dart';
 import '../subscription/plan_view_model.dart';
-import 'map_view_model.dart';
+import '../map/map_view_model.dart';
 
 class StationDetailPanel extends StatelessWidget {
   const StationDetailPanel({super.key});
@@ -136,7 +136,7 @@ class StationDetailPanel extends StatelessWidget {
             Flexible(
               child: _BikePanelList(
                 bikes: vm.bikes,
-                isStartingRide: vm.isStartingRide,
+                isStartingRide: vm.isStartingRide,  // Disables taps while starting
                 onBikeTap: (bike) async {
                   final mapVm = context.read<MapViewModel>();
                   final detailVm = context.read<StationDetailViewModel>();

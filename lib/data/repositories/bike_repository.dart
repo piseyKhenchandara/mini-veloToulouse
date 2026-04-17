@@ -11,7 +11,8 @@ class BikeRepository {
         .from('bikes')
         .select()
         .eq('station_id', stationId)
-        .eq('status', 'available');
+        .eq('status', 'available')
+        .order('slot_number', ascending: true);
     return (data as List)
         .map((e) => BikeDto.fromJson(e as Map<String, dynamic>).toBike())
         .toList();

@@ -20,10 +20,10 @@ class MapViewModel extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
   Station? _selectedStation;
-  LatLng? _userLocation;
+  LatLng? _userLocation; // User's current GPS coordinates
   bool _showDetailPanel = false;
-  ActiveRide? _activeRide;
-  Duration _rideDuration = Duration.zero;
+  ActiveRide? _activeRide; // Current ride if user is riding
+  Duration _rideDuration = Duration.zero; // How long current ride has lasted
   Timer? _rideTimer;
   String _searchQuery = '';
 
@@ -35,16 +35,19 @@ class MapViewModel extends ChangeNotifier {
   bool get showDetailPanel => _showDetailPanel;
   ActiveRide? get activeRide => _activeRide;
   bool get isRiding => _activeRide != null;
-  Duration get rideDuration => _rideDuration;
+  Duration get rideDuration => _rideDuration; // Formatted as mm:ss in UI
 
   List<Station> get searchSuggestions {
     if (_searchQuery.isEmpty) return [];
+
     final q = _searchQuery.toLowerCase();
+
     return _stations
         .where((s) => s.name.toLowerCase().contains(q))
         .take(5)
         .toList();
   }
+  // only first 5 stations will be shown
 
   void onSearchChanged(String query) {
     _searchQuery = query;
@@ -62,7 +65,8 @@ class MapViewModel extends ChangeNotifier {
     _showDetailPanel = false;
     _selectedStation = null;
     _searchQuery = '';
-    _rideDuration = Duration.zero;
+    _rideDuration = Duration
+        .zero; // Equivalent to: Duration(seconds: 0, milliseconds: 0, microseconds: 0), reset timer to 0:00:00
     _rideTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _rideDuration += const Duration(seconds: 1);
       notifyListeners();
@@ -105,6 +109,7 @@ class MapViewModel extends ChangeNotifier {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
+      //If user denied (or denied permanently), exit function early
       if (permission == LocationPermission.deniedForever ||
           permission == LocationPermission.denied) {
         return;
