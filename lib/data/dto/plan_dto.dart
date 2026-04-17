@@ -11,8 +11,8 @@ class PlanDto {
   factory PlanDto.fromJson(Map<String, dynamic> json) => PlanDto(
     id: json['id'] as String,
     planName: json['name'] as String,
-    price: (json['price'] as double?) ?? 0.0,
-    time: json['duration_days'] as int,
+    price: (json['price'] as num?)?.toDouble() ?? 0.0,
+    time: (json['duration_days'] as int?) ?? 0,
   );
 
   Plan toPlan() => Plan(

@@ -3,29 +3,41 @@ import 'package:mini_velo/model/plan.dart';
 
 class PlanPanel extends StatelessWidget {
   final Plan plan;
+  final bool isActive;
+  final bool isSelected;
 
-  const PlanPanel({super.key, required this.plan});
+  const PlanPanel({
+    super.key,
+    required this.plan,
+    this.isActive = false,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = plan.status == "active";
-
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.green),
-        color: isActive ? Colors.green.withOpacity(0.15) : Colors.grey[100],
+        color: isSelected ? Colors.green.withOpacity(0.15) : Colors.grey[100],
+
         borderRadius: BorderRadius.circular(16),
+
+        border: Border.all(
+          color: isSelected ? Colors.green : Colors.transparent,
+          width: 2,
+        ),
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 TOP ROW (icon + name)
+          // 🔹 TOP ROW
           Row(
             children: [
               Image.asset(
-                'images/ticket.png',
+                'assets/images/ticket.png',
                 width: 60,
                 height: 44,
                 fit: BoxFit.contain,
@@ -59,7 +71,7 @@ class PlanPanel extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // 🔹 BOTTOM ROW (price + time)
+          // 🔹 BOTTOM ROW
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -110,6 +122,6 @@ class PlanPanel extends StatelessWidget {
   // 🔹 helper: time text
   String _getTimeText(int time) {
     if (time == 0) return "1 Ride";
-    return "$time hrs";
+    return "${time * 24} hrs";
   }
 }

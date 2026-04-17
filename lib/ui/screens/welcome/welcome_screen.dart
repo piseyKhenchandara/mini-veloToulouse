@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mini_velo/ui/screens/shell/main_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/primary_button.dart';
-import '../map/map_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
