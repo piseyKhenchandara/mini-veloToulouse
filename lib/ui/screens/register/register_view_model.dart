@@ -24,6 +24,7 @@ class RegisterViewModel extends ChangeNotifier {
       _email.isNotEmpty &&
       _password.isNotEmpty &&
       _confirmPassword.isNotEmpty &&
+      _password == _confirmPassword &&
       !_isLoading;
 
   void setEmail(String value) {
