@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../../model/bike.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/payment_confirm_sheet.dart';
 import '../station_detail/station_detail_view_model.dart';
+import '../subscription/plan_view_model.dart';
 import 'map_view_model.dart';
 
 class StationDetailPanel extends StatelessWidget {
@@ -138,6 +140,65 @@ class StationDetailPanel extends StatelessWidget {
                 onBikeTap: (bike) async {
                   final mapVm = context.read<MapViewModel>();
                   final detailVm = context.read<StationDetailViewModel>();
+                  final planVm = context.read<PlanViewModel>();
+
+                  // Check if user has Pay Per Ride plan active
+                  if (planVm.activePlan != null && planVm.activePlan?.planName == "per_ride") {
+                    // Get the Pay Per Ride plan from all plans
+                    try {
+                      final payPerRidePlan = planVm.plans
+                          .firstWhere((p) => p.planName == "per_ride");
+                      final userId = "9e2536f0-d025-420c-9112-ec279dc6b146";
+                      
+                      if (context.mounted) {
+                        // Show payment sheet
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          builder: (_) => PaymentConfirmSheet(
+                            plan: payPerRidePlan,
+                            onConfirm: () async {
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              
+                              final success =
+                                  await planVm.buyPlan(userId, payPerRidePlan);
+                              
+                              if (!context.mounted) return;
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? 'Plan activated!'
+                                        : 'Purchase failed. Try again.',
+                                  ),
+                                  backgroundColor:
+                                      success ? Colors.green : Colors.red,
+                                ),
+                              );
+                              
+                              // If payment successful, proceed with renting the bike
+                              if (success && context.mounted) {
+                                final ride = await detailVm.startRide(bike);
+                                if (ride != null && context.mounted) {
+                                  mapVm.onRideStarted(ride);
+                                }
+                              }
+                            },
+                          ),
+                        );
+                      }
+                      return;
+                    } catch (e) {
+                      // Pay Per Ride plan not found
+                    }
+                  }
+
+                  // Normal ride start if not Pay Per Ride
                   final ride = await detailVm.startRide(bike);
                   if (ride != null && context.mounted) {
                     mapVm.onRideStarted(ride);

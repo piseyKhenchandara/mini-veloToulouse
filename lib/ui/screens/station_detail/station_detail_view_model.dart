@@ -12,8 +12,9 @@ class StationDetailViewModel extends ChangeNotifier {
   final Station _station;
   final BikeRepository _bikeRepository;
   final RideRepository _rideRepository;
+  final String _userId;
 
-  StationDetailViewModel(this._station, this._bikeRepository, this._rideRepository) {
+  StationDetailViewModel(this._station, this._bikeRepository, this._rideRepository, this._userId) {
     _load();
   }
 
@@ -88,6 +89,7 @@ class StationDetailViewModel extends ChangeNotifier {
 
     try {
       final ride = await _rideRepository.startRide(
+        userId: _userId,
         bikeId: bike.id,
         bikeNumber: bike.bikeNumber,
         stationId: _station.id,

@@ -6,12 +6,14 @@ class RideRepository {
   final _client = Supabase.instance.client;
 
   Future<ActiveRide> startRide({
+    required String userId,
     required String bikeId,
     required String bikeNumber,
     required String stationId,
     required int slotNumber,
   }) async {
     final rideData = await _client.from('rides').insert({
+      'user_id': userId,
       'bike_id': bikeId,
       'bike_number': bikeNumber,
       'start_station_id': stationId,

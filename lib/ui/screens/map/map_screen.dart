@@ -8,9 +8,11 @@ import 'package:provider/provider.dart';
 
 import '../../../config/map_config.dart';
 import '../../../data/repositories/bike_repository.dart';
+import '../../../data/repositories/plan_repository.dart';
 import '../../../data/repositories/ride_repository.dart';
 import '../../../data/repositories/station_repository.dart';
 import '../station_detail/station_detail_view_model.dart';
+import '../subscription/plan_view_model.dart';
 import 'map_view_model.dart';
 import 'return_station_panel.dart';
 import 'return_station_panel_view_model.dart';
@@ -22,8 +24,15 @@ class MapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => MapViewModel(StationRepository()),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => MapViewModel(StationRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PlanViewModel(PlanRepository()),
+        ),
+      ],
       child: const _MapView(),
     );
   }
@@ -35,10 +44,20 @@ class _MapView extends StatefulWidget {
   @override
   State<_MapView> createState() => _MapViewState();
 }
-
 class _MapViewState extends State<_MapView> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the plan view model with user data
+    Future.microtask(() {
+      final userId = "9e2536f0-d025-420c-9112-ec279dc6b146";
+      final planVm = context.read<PlanViewModel>();
+      planVm.init(userId);
+    });
+  }
 
   @override
   void dispose() {
@@ -151,6 +170,7 @@ class _MapViewState extends State<_MapView> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                SizedBox(height: 50,),
                 if (vm.isRiding)
                   RideBar(ride: vm.activeRide!, duration: vm.rideDuration),
                 Padding(
@@ -301,6 +321,7 @@ class _MapViewState extends State<_MapView> {
                         vm.selectedStation!,
                         BikeRepository(),
                         RideRepository(),
+                        "9e2536f0-d025-420c-9112-ec279dc6b146",
                       ),
                       child: const StationDetailPanel(),
                     ),

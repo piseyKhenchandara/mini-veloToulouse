@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mini_velo/ui/screens/shell/main_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/primary_button.dart';
-import '../map/map_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -27,12 +27,11 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MapScreen()),
+                    MaterialPageRoute(builder: (_) => const MainShell()),
                   );
                 },
               ),
               const SizedBox(height: 18),
-              _LoginLink(),
               const Spacer(),
               _Footer(),
               const SizedBox(height: 16),
@@ -80,31 +79,10 @@ class _MapCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Image.asset(
-        'assets/images/image.png',
+        'assets/images/location.png',
         width: double.infinity,
         height: 220,
         fit: BoxFit.cover,
-      ),
-    );
-  }
-}
-
-class _LoginLink extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // TODO: navigate to login screen
-      },
-      child: const Text(
-        'Log in to your account',
-        style: TextStyle(
-          fontSize: 15,
-          color: AppColors.primary,
-          decoration: TextDecoration.underline,
-          decorationColor: AppColors.primary,
-          fontWeight: FontWeight.w500,
-        ),
       ),
     );
   }
