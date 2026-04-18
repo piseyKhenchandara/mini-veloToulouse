@@ -51,7 +51,7 @@ class _BikeHeader extends StatelessWidget {
         Image.asset('assets/images/ride.png', width: 72, height: 72),
         const SizedBox(height: 16),
         const Text(
-          'VeloToulouse',
+          'KONG JOUL',
           style: TextStyle(
             fontSize: 34,
             fontWeight: FontWeight.bold,
